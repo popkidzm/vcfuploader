@@ -1,225 +1,102 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VCF Generator Pro</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
-<style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
-body{background:linear-gradient(135deg,#020617,#0f172a);color:#fff;overflow-x:hidden;}
-.container{max-width:500px;margin:40px auto;padding:20px;}
-.card{background: rgba(255,255,255,0.05);backdrop-filter:blur(12px);border-radius:20px;padding:20px;box-shadow:0 0 25px rgba(34,197,94,0.2);}
-.title{text-align:center;margin-bottom:20px;font-size:24px;font-weight:600;color:#22c55e;}
-.input{width:100%;padding:12px;margin-bottom:10px;border-radius:10px;border:none;outline:none;background:#020617;color:#fff;}
-.btn{width:100%;padding:12px;border:none;border-radius:12px;background:#22c55e;color:#000;font-weight:600;cursor:pointer;transition:0.3s;margin-bottom:10px;}
-.btn:hover{background:#16a34a;}
-.progress-box{margin-top:15px;}
-.progress-bar{width:100%;height:12px;background:#1e293b;border-radius:10px;overflow:hidden;}
-.progress-fill{height:100%;width:0%;background:linear-gradient(90deg,#22c55e,#4ade80);}
-.progress-text{text-align:center;margin-top:5px;font-size:14px;}
-.admin-panel{display:none;margin-top:20px;}
-.contact-list{max-height:200px;overflow-y:auto;margin-top:10px;font-size:13px;}
-.contact-list div{padding:5px;border-bottom:1px solid #334155;}
-#celebration{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;display:none;}
-.confetti-piece{position:absolute;width:10px;height:10px;background:#22c55e;animation:fall 2s linear forwards;}
-@keyframes fall{
-  0%{opacity:1;transform:translateY(0) rotate(0deg);}
-  100%{opacity:0;transform:translateY(400px) rotate(360deg);}
-}
-.success-msg{color:#22c55e;text-align:center;margin:10px;font-weight:600;}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Contact Pool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBDCMrnwLv5VdLYnaAVQ8QQKo00ucCOvwE",
+            authDomain: "global-contact-pool.firebaseapp.com",
+            projectId: "global-contact-pool",
+            storageBucket: "global-contact-pool.firebasestorage.app",
+            messagingSenderId: "820659549943",
+            appId: "1:820659549943:web:b681882bbfdcd595c685f2",
+            measurementId: "G-FLQHJN8K61"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // UI Updates
+        onSnapshot(doc(db, "settings", "goal"), (settingsDoc) => {
+            onSnapshot(collection(db, "contacts"), (snap) => {
+                const count = snap.size;
+                const target = settingsDoc.exists() ? settingsDoc.data().target : 100;
+                const percent = Math.min((count / target) * 100, 100);
+                document.getElementById('progress-bar').style.width = percent + '%';
+                document.getElementById('count-text').innerText = `${count} / ${target} Contacts Joined`;
+            });
+        });
+
+        // Form Submission
+        document.getElementById('contactForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            btn.disabled = true;
+            btn.innerText = "Saving...";
+
+            try {
+                await addDoc(collection(db, "contacts"), {
+                    name: document.getElementById('name').value,
+                    phone: document.getElementById('phone').value,
+                    country: document.getElementById('country').value,
+                    createdAt: serverTimestamp()
+                });
+                alert("Success! You've been added.");
+                e.target.reset();
+            } catch (err) {
+                alert("Error saving contact.");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Submit Details";
+            }
+        });
+    </script>
 </head>
-<body>
-<div class="container">
-  <div class="card">
-    <div class="title">VCF Generator Pro ⚡</div>
+<body class="bg-gray-50 flex items-center justify-center min-h-screen p-4">
+    <div class="max-w-md w-full bg-white shadow-xl rounded-2xl p-8 border border-gray-100">
+        <h1 class="text-3xl font-extrabold text-gray-800 mb-2 text-center">Global List</h1>
+        <p class="text-gray-500 text-center mb-8">Enter your details to join the directory.</p>
+        
+        <div class="mb-8">
+            <div class="flex justify-between mb-2">
+                <span id="count-text" class="text-sm font-bold text-blue-600">Loading...</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+                <div id="progress-bar" class="bg-blue-500 h-full transition-all duration-1000" style="width: 0%"></div>
+            </div>
+        </div>
 
-    <!-- User submission -->
-    <input class="input" id="name" placeholder="Full Name">
-    <input class="input" id="phone" placeholder="Phone Number">
-    <select class="input" id="country"></select>
-    <button class="btn" onclick="submitContact()">Add Contact</button>
-    <div id="successMsg" class="success-msg"></div>
-
-    <div class="progress-box">
-      <div class="progress-bar">
-        <div id="progressFill" class="progress-fill"></div>
-      </div>
-      <div id="progressText" class="progress-text">0 / 100</div>
+        <form id="contactForm" class="space-y-5">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                <input type="text" id="name" placeholder="John Doe" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Country</label>
+                <select id="country" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required>
+                    <option value="">Select Country</option>
+                    <option value="USA">United States (+1)</option>
+                    <option value="UK">United Kingdom (+44)</option>
+                    <option value="Nigeria">Nigeria (+234)</option>
+                    <option value="Kenya">Kenya (+254)</option>
+                    <option value="South Africa">South Africa (+27)</option>
+                    <option value="Ghana">Ghana (+233)</option>
+                    <option value="India">India (+91)</option>
+                    <option value="Canada">Canada (+1)</option>
+                    </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                <input type="tel" id="phone" placeholder="e.g. 0712345678" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required>
+            </div>
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-lg transition">Submit Details</button>
+        </form>
     </div>
-
-    <hr style="margin:20px 0; border:1px solid #334155;">
-
-    <!-- Admin login -->
-    <input class="input" id="adminEmail" placeholder="Admin Email">
-    <input class="input" id="adminPassword" type="password" placeholder="Password">
-    <button class="btn" onclick="loginAdmin()">Login as Admin</button>
-
-    <div id="adminContent" class="admin-panel">
-      <input class="input" id="targetInput" type="number" placeholder="Set Target">
-      <button class="btn" onclick="setTarget()">Update Target</button>
-      <button class="btn" onclick="downloadVCF()">Download VCF</button>
-
-      <div class="contact-list" id="contactList"></div>
-    </div>
-  </div>
-</div>
-
-<div id="celebration"></div>
-
-<!-- Firebase SDK (compat) -->
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-
-<script>
-// 🔹 Replace with your Firebase config
-const firebaseConfig = {
-  apiKey: "AIzaSyDe8i7FOSmuWCUhqwLXb9nBDWQKSIBKJpw",
-  authDomain: "ridesphere-popkid.firebaseapp.com",
-  projectId: "ridesphere-popkid",
-  storageBucket: "ridesphere-popkid.firebasestorage.app",
-  messagingSenderId: "476462103607",
-  appId: "1:476462103607:web:54293c3917fb0f88c113b2"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const auth = firebase.auth();
-
-// Load countries
-async function loadCountries() {
-  const res = await fetch("https://restcountries.com/v3.1/all");
-  const data = await res.json();
-  const select = document.getElementById("country");
-  data.sort((a,b)=>a.name.common.localeCompare(b.name.common));
-  data.forEach(c=>{
-    const option = document.createElement("option");
-    option.value = c.name.common;
-    option.text = c.name.common;
-    select.appendChild(option);
-  });
-}
-loadCountries();
-
-// Real-time target listener
-db.collection("config").doc("target").onSnapshot(doc=>{
-    if(doc.exists){
-        loadProgress();
-    }
-});
-
-// Real-time contacts listener
-db.collection("contacts").onSnapshot(()=>{
-    loadProgress();
-    if(document.getElementById("adminContent").style.display==="block"){
-        loadContacts();
-    }
-});
-
-// Add contact
-async function submitContact() {
-  const name = document.getElementById("name").value;
-  const phone = document.getElementById("phone").value;
-  const country = document.getElementById("country").value;
-  if(!name||!phone){ alert("Fill all fields"); return; }
-
-  const snapshot = await db.collection("contacts").get();
-  const count = snapshot.size;
-  const targetDoc = await db.collection("config").doc("target").get();
-  const target = targetDoc.exists ? targetDoc.data().value : 100;
-  if(count>=target){ alert("Target reached!"); return; }
-
-  await db.collection("contacts").add({name, phone, country});
-  document.getElementById("name").value="";
-  document.getElementById("phone").value="";
-
-  showSuccess();
-}
-
-// Progress bar
-async function loadProgress() {
-  const snapshot = await db.collection("contacts").get();
-  const count = snapshot.size;
-  const targetDoc = await db.collection("config").doc("target").get();
-  const target = targetDoc.exists ? targetDoc.data().value : 100;
-  const percent = (count/target)*100;
-  document.getElementById("progressFill").style.width = percent+"%";
-  document.getElementById("progressText").innerText = `${count} / ${target}`;
-}
-
-// Admin login
-async function loginAdmin() {
-  const email = document.getElementById("adminEmail").value;
-  const password = document.getElementById("adminPassword").value;
-  try{
-    await auth.signInWithEmailAndPassword(email,password);
-    alert("Admin logged in ✅");
-    document.getElementById("adminContent").style.display="block";
-    loadContacts();
-  } catch(err){
-    alert("Login failed ❌"); console.log(err.message);
-  }
-}
-
-// Load contacts for admin
-async function loadContacts() {
-  const snapshot = await db.collection("contacts").get();
-  const list = document.getElementById("contactList");
-  list.innerHTML="";
-  snapshot.forEach(doc=>{
-    const c=doc.data();
-    list.innerHTML+=`<div>${c.name} - ${c.phone} (${c.country})</div>`;
-  });
-}
-
-// Set target
-async function setTarget() {
-  const value=document.getElementById("targetInput").value;
-  if(!value) return alert("Enter a number");
-  await db.collection("config").doc("target").set({value:Number(value)});
-  loadProgress();
-  alert("Target updated ✅");
-}
-
-// Download VCF
-async function downloadVCF() {
-  const snapshot = await db.collection("contacts").get();
-  let vcf="";
-  snapshot.forEach(doc=>{
-    const c=doc.data();
-    vcf+=`BEGIN:VCARD\nVERSION:3.0\nFN:${c.name}\nTEL:${c.phone}\nEND:VCARD\n`;
-  });
-  const blob = new Blob([vcf], {type:"text/vcard"});
-  const link = document.createElement("a");
-  link.href=URL.createObjectURL(blob);
-  link.download="contacts.vcf";
-  link.click();
-}
-
-// Celebration animation
-function showSuccess(){
-  const msg = document.getElementById("successMsg");
-  msg.innerText = "Successfully added! 🎉";
-  createConfetti();
-  setTimeout(()=>{ msg.innerText=""; },3000);
-}
-
-function createConfetti(){
-  const container = document.getElementById("celebration");
-  container.innerHTML="";
-  container.style.display="block";
-  for(let i=0;i<50;i++){
-    const div = document.createElement("div");
-    div.classList.add("confetti-piece");
-    div.style.left=Math.random()*100+"%";
-    div.style.background = `hsl(${Math.random()*360}, 100%, 50%)`;
-    container.appendChild(div);
-    setTimeout(()=>{ div.remove(); },2000);
-  }
-  setTimeout(()=>{ container.style.display="none"; },2000);
-}
-</script>
 </body>
 </html>
