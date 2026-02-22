@@ -6,62 +6,65 @@
 <title>VCF Generator Pro</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
 <style>
-* { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins', sans-serif; }
-body { background: linear-gradient(135deg,#020617,#0f172a); color:#fff; }
-.container { max-width:420px; margin:40px auto; padding:20px; }
-.card { background: rgba(255,255,255,0.05); backdrop-filter: blur(12px); border-radius:20px; padding:20px; box-shadow:0 0 25px rgba(34,197,94,0.2);}
-.title { text-align:center; margin-bottom:20px; font-size:22px; font-weight:600; color:#22c55e;}
-.input { width:100%; padding:12px; margin-bottom:10px; border-radius:10px; border:none; outline:none; background:#020617; color:#fff;}
-.btn { width:100%; padding:12px; border:none; border-radius:12px; background:#22c55e; color:#000; font-weight:600; cursor:pointer; transition:0.3s;}
-.btn:hover { background:#16a34a; }
-.progress-box { margin-top:15px; }
-.progress-bar { width:100%; height:12px; background:#1e293b; border-radius:10px; overflow:hidden; }
-.progress-fill { height:100%; width:0%; background: linear-gradient(90deg,#22c55e,#4ade80); }
-.progress-text { text-align:center; margin-top:5px; font-size:13px; }
-.admin-toggle { margin-top:15px; text-align:center; cursor:pointer; font-size:13px; opacity:0.7; }
-.admin-panel { display:none; margin-top:15px; }
-.contact-list { max-height:150px; overflow-y:auto; margin-top:10px; font-size:12px; }
-.contact-list div { padding:5px; border-bottom:1px solid #334155; }
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
+body{background:linear-gradient(135deg,#020617,#0f172a);color:#fff;}
+.container{max-width:500px;margin:40px auto;padding:20px;}
+.card{background: rgba(255,255,255,0.05);backdrop-filter:blur(12px);border-radius:20px;padding:20px;box-shadow:0 0 25px rgba(34,197,94,0.2);}
+.title{text-align:center;margin-bottom:20px;font-size:24px;font-weight:600;color:#22c55e;}
+.input{width:100%;padding:12px;margin-bottom:10px;border-radius:10px;border:none;outline:none;background:#020617;color:#fff;}
+.btn{width:100%;padding:12px;border:none;border-radius:12px;background:#22c55e;color:#000;font-weight:600;cursor:pointer;transition:0.3s;}
+.btn:hover{background:#16a34a;}
+.progress-box{margin-top:15px;}
+.progress-bar{width:100%;height:12px;background:#1e293b;border-radius:10px;overflow:hidden;}
+.progress-fill{height:100%;width:0%;background:linear-gradient(90deg,#22c55e,#4ade80);}
+.progress-text{text-align:center;margin-top:5px;font-size:14px;}
+.admin-panel{display:none;margin-top:20px;}
+.contact-list{max-height:200px;overflow-y:auto;margin-top:10px;font-size:13px;}
+.contact-list div{padding:5px;border-bottom:1px solid #334155;}
 </style>
 </head>
 <body>
 <div class="container">
-<div class="card">
-<div class="title">VCF Generator Pro ⚡</div>
+  <div class="card">
+    <div class="title">VCF Generator Pro ⚡</div>
 
-<input class="input" id="name" placeholder="Full Name">
-<input class="input" id="phone" placeholder="Phone Number">
-<select class="input" id="country"></select>
-<button class="btn" onclick="submitContact()">Add Contact</button>
+    <!-- User submission -->
+    <input class="input" id="name" placeholder="Full Name">
+    <input class="input" id="phone" placeholder="Phone Number">
+    <select class="input" id="country"></select>
+    <button class="btn" onclick="submitContact()">Add Contact</button>
 
-<div class="progress-box">
-<div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-<div class="progress-text" id="progressText">0 / 100</div>
+    <div class="progress-box">
+      <div class="progress-bar">
+        <div id="progressFill" class="progress-fill"></div>
+      </div>
+      <div id="progressText" class="progress-text">0 / 100</div>
+    </div>
+
+    <hr style="margin:20px 0; border:1px solid #334155;">
+
+    <!-- Admin login -->
+    <input class="input" id="adminEmail" placeholder="Admin Email">
+    <input class="input" id="adminPassword" type="password" placeholder="Password">
+    <button class="btn" onclick="loginAdmin()">Login as Admin</button>
+
+    <div id="adminContent" class="admin-panel">
+      <input class="input" id="targetInput" type="number" placeholder="Set Target">
+      <button class="btn" onclick="setTarget()">Update Target</button>
+      <button class="btn" onclick="downloadVCF()">Download VCF</button>
+
+      <div class="contact-list" id="contactList"></div>
+    </div>
+  </div>
 </div>
 
-<div class="admin-toggle" onclick="toggleAdmin()">Admin Panel</div>
-<div class="admin-panel" id="adminPanel">
-<input class="input" id="adminEmail" placeholder="Admin Email">
-<input class="input" id="adminPassword" type="password" placeholder="Password">
-<button class="btn" onclick="loginAdmin()">Login</button>
-
-<div id="adminContent" style="display:none;">
-<input class="input" id="targetInput" type="number" placeholder="Set Target">
-<button class="btn" onclick="setTarget()">Update Target</button>
-<button class="btn" onclick="downloadVCF()">Download VCF</button>
-<div class="contact-list" id="contactList"></div>
-</div>
-</div>
-</div>
-</div>
-
-<!-- Firebase -->
+<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 
 <script>
-// 🔥 YOUR FIREBASE CONFIG
+// Replace this with your Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyDe8i7FOSmuWCUhqwLXb9nBDWQKSIBKJpw",
   authDomain: "ridesphere-popkid.firebaseapp.com",
@@ -70,113 +73,105 @@ const firebaseConfig = {
   messagingSenderId: "476462103607",
   appId: "1:476462103607:web:54293c3917fb0f88c113b2"
 };
+
+// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
 
-// 🌍 Load All Countries
+// Load countries
 async function loadCountries() {
-    const res = await fetch("https://restcountries.com/v3.1/all");
-    const data = await res.json();
-    const select = document.getElementById("country");
-    data.sort((a,b)=>a.name.common.localeCompare(b.name.common));
-    data.forEach(c => {
-        const option = document.createElement("option");
-        option.value = c.name.common;
-        option.text = c.name.common;
-        select.appendChild(option);
-    });
+  const res = await fetch("https://restcountries.com/v3.1/all");
+  const data = await res.json();
+  const select = document.getElementById("country");
+  data.sort((a,b)=>a.name.common.localeCompare(b.name.common));
+  data.forEach(c=>{
+    const option = document.createElement("option");
+    option.value = c.name.common;
+    option.text = c.name.common;
+    select.appendChild(option);
+  });
 }
 loadCountries();
 
-// ✅ Admin Auth State
-auth.onAuthStateChanged(user => {
-    if(user) document.getElementById("adminContent").style.display = "block";
-});
+// Add contact
+async function submitContact() {
+  const name = document.getElementById("name").value;
+  const phone = document.getElementById("phone").value;
+  const country = document.getElementById("country").value;
+  if(!name||!phone){ alert("Fill all fields"); return; }
 
-// ADD CONTACT
-async function submitContact(){
-    const snapshot = await db.collection("contacts").get();
-    const count = snapshot.size;
+  const snapshot = await db.collection("contacts").get();
+  const count = snapshot.size;
+  const targetDoc = await db.collection("config").doc("target").get();
+  const target = targetDoc.exists ? targetDoc.data().value : 100;
+  if(count>=target){ alert("Target reached!"); return; }
 
-    let targetDoc = await db.collection("config").doc("target").get();
-    let target = targetDoc.exists ? targetDoc.data().value : 100;
-
-    if(count>=target){ alert("Target reached ❌ Submissions closed"); return;}
-
-    const name = document.getElementById("name").value;
-    const phone = document.getElementById("phone").value;
-    const country = document.getElementById("country").value;
-    if(!name||!phone) return alert("Fill all fields");
-
-    await db.collection("contacts").add({name,phone,country});
-    document.getElementById("name").value="";
-    document.getElementById("phone").value="";
-    loadProgress();
+  await db.collection("contacts").add({name, phone, country});
+  document.getElementById("name").value="";
+  document.getElementById("phone").value="";
+  loadProgress();
 }
 
-// PROGRESS
-async function loadProgress(){
-    const snapshot = await db.collection("contacts").get();
-    const count = snapshot.size;
-    let targetDoc = await db.collection("config").doc("target").get();
-    let target = targetDoc.exists ? targetDoc.data().value : 100;
-    let percent = (count/target)*100;
-    document.getElementById("progressFill").style.width=percent+"%";
-    document.getElementById("progressText").innerText=`${count} / ${target}`;
+// Progress bar
+async function loadProgress() {
+  const snapshot = await db.collection("contacts").get();
+  const count = snapshot.size;
+  const targetDoc = await db.collection("config").doc("target").get();
+  const target = targetDoc.exists ? targetDoc.data().value : 100;
+  const percent = (count/target)*100;
+  document.getElementById("progressFill").style.width = percent+"%";
+  document.getElementById("progressText").innerText = `${count} / ${target}`;
 }
 loadProgress();
 
-// ADMIN PANEL
-function toggleAdmin(){
-    const panel=document.getElementById("adminPanel");
-    panel.style.display = panel.style.display==="block"?"none":"block";
+// Admin login
+async function loginAdmin() {
+  const email = document.getElementById("adminEmail").value;
+  const password = document.getElementById("adminPassword").value;
+  try{
+    await auth.signInWithEmailAndPassword(email,password);
+    alert("Admin logged in ✅");
+    document.getElementById("adminContent").style.display="block";
+    loadContacts();
+  } catch(err){
+    alert("Login failed ❌"); console.log(err.message);
+  }
 }
 
-async function loginAdmin(){
-    const email=document.getElementById("adminEmail").value;
-    const password=document.getElementById("adminPassword").value;
-    if(!email||!password){ alert("Fill all fields"); return;}
-    try{
-        await auth.signInWithEmailAndPassword(email,password);
-        document.getElementById("adminContent").style.display="block";
-        loadContacts();
-        alert("Admin logged in ✅");
-    }catch(err){ alert("Login failed ❌"); console.log(err.message);}
+// Load contacts for admin
+async function loadContacts() {
+  const snapshot = await db.collection("contacts").get();
+  const list = document.getElementById("contactList");
+  list.innerHTML="";
+  snapshot.forEach(doc=>{
+    const c=doc.data();
+    list.innerHTML+=`<div>${c.name} - ${c.phone} (${c.country})</div>`;
+  });
 }
 
-// LOAD CONTACTS
-async function loadContacts(){
-    const snapshot = await db.collection("contacts").get();
-    const list=document.getElementById("contactList");
-    list.innerHTML="";
-    snapshot.forEach(doc=>{
-        const c=doc.data();
-        list.innerHTML+=`<div>${c.name} - ${c.phone} (${c.country})</div>`;
-    });
+// Set target
+async function setTarget() {
+  const value=document.getElementById("targetInput").value;
+  if(!value) return alert("Enter a number");
+  await db.collection("config").doc("target").set({value:Number(value)});
+  loadProgress();
+  alert("Target updated ✅");
 }
 
-// SET TARGET
-async function setTarget(){
-    const value=document.getElementById("targetInput").value;
-    if(!value) return alert("Enter target");
-    await db.collection("config").doc("target").set({value});
-    loadProgress();
-}
-
-// DOWNLOAD VCF
-async function downloadVCF(){
-    const snapshot = await db.collection("contacts").get();
-    let vcf="";
-    snapshot.forEach(doc=>{
-        const c=doc.data();
-        vcf+=`BEGIN:VCARD\nVERSION:3.0\nFN:${c.name}\nTEL:${c.phone}\nEND:VCARD\n`;
-    });
-    const blob=new Blob([vcf],{type:"text/vcard"});
-    const link=document.createElement("a");
-    link.href=URL.createObjectURL(blob);
-    link.download="contacts.vcf";
-    link.click();
+// Download VCF
+async function downloadVCF() {
+  const snapshot = await db.collection("contacts").get();
+  let vcf="";
+  snapshot.forEach(doc=>{
+    const c=doc.data();
+    vcf+=`BEGIN:VCARD\nVERSION:3.0\nFN:${c.name}\nTEL:${c.phone}\nEND:VCARD\n`;
+  });
+  const blob = new Blob([vcf], {type:"text/vcard"});
+  const link = document.createElement("a");
+  link.href=URL.createObjectURL(blob);
+  link.download="contacts.vcf";
+  link.click();
 }
 </script>
 </body>
