@@ -3,12 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Join Global Pool</title>
+    <title>Global Contact Pool</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body class="bg-slate-50 min-h-screen flex items-center justify-center p-4">
-    <div class="max-w-md w-full bg-white shadow-2xl rounded-3xl p-8">
-        <h1 class="text-3xl font-bold text-center text-slate-800 mb-6">Global Contacts</h1>
+    <div class="max-w-md w-full bg-white shadow-2xl rounded-3xl p-8 border border-slate-100">
+        <h1 class="text-3xl font-bold text-center text-slate-800 mb-2">Global Contacts</h1>
+        <p class="text-center text-slate-500 text-sm mb-6">Join the community and stay updated</p>
         
         <div class="mb-8">
             <div class="flex justify-between text-sm font-bold text-blue-600 mb-2">
@@ -19,20 +21,34 @@
             </div>
         </div>
 
-        <form id="contactForm" class="space-y-4">
-            <input type="text" id="name" placeholder="Full Name" class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-400" required>
-            <select id="country" class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-400" required>
-                <option value="">Select Country</option>
-                <option value="Kenya">Kenya (+254)</option>
-                <option value="Nigeria">Nigeria (+234)</option>
-                <option value="USA">USA (+1)</option>
-                <option value="UK">UK (+44)</option>
-                <option value="Global">Other</option>
+        <form id="contactForm" class="space-y-4 mb-8">
+            <input type="text" id="name" placeholder="Full Name" class="w-full p-3 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-400 shadow-sm" required>
+            
+            <select id="country" class="w-full p-3 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-400 shadow-sm" required>
+                <option value="">Loading Countries...</option>
             </select>
-            <input type="tel" id="phone" placeholder="Phone (e.g. 07...)" class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-400" required>
-            <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition">Submit Now</button>
+
+            <input type="tel" id="phone" placeholder="Phone Number" class="w-full p-3 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-400 shadow-sm" required>
+            <button type="submit" id="submitBtn" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition shadow-lg">
+                Submit Details
+            </button>
         </form>
+
+        <div class="border-t border-slate-100 pt-6 space-y-3">
+            <p class="text-center text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Join our community</p>
+            
+            <a href="https://chat.whatsapp.com/E0rMzLcYiBBFxGGEu9RkUR" target="_blank" 
+               class="flex items-center justify-center gap-3 w-full bg-[#25D366] text-white font-bold py-3 rounded-xl hover:bg-[#128C7E] transition shadow-md">
+                <i class="fab fa-whatsapp text-xl"></i> Join WhatsApp Group
+            </a>
+
+            <a href="https://whatsapp.com/channel/0029Vb70ySJHbFV91PNKuL3T" target="_blank" 
+               class="flex items-center justify-center gap-3 w-full border-2 border-[#25D366] text-[#128C7E] font-bold py-3 rounded-xl hover:bg-slate-50 transition">
+                <i class="fas fa-bullhorn"></i> Follow Our Channel
+            </a>
+        </div>
     </div>
+
     <script type="module" src="app.js"></script>
 </body>
 </html>
