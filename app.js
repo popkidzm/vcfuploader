@@ -16,23 +16,38 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// --- LOGIC FOR INDEX.HTML (Public Form) ---
+// All Countries List
+const countries = ["Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bhutan", "Bolivia", "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", "Burkina Faso", "Burundi", "Cabo Verde", "Cambodia", "Cameroon", "Canada", "Central African Republic", "Chad", "Chile", "China", "Colombia", "Comoros", "Congo", "Costa Rica", "Croatia", "Cuba", "Cyprus", "Czech Republic", "Denmark", "Djibouti", "Dominica", "Dominican Republic", "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia", "Eswatini", "Ethiopia", "Fiji", "Finland", "France", "Gabon", "Gambia", "Georgia", "Germany", "Ghana", "Greece", "Grenada", "Guatemala", "Guinea", "Guinea-Bissau", "Guyana", "Haiti", "Honduras", "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy", "Ivory Coast", "Jamaica", "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Kuwait", "Kyrgyzstan", "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg", "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania", "Mauritius", "Mexico", "Micronesia", "Moldova", "Monaco", "Mongolia", "Montenegro", "Morocco", "Mozambique", "Myanmar", "Namibia", "Nauru", "Nepal", "Netherlands", "New Zealand", "Nicaragua", "Niger", "Nigeria", "North Korea", "North Macedonia", "Norway", "Oman", "Pakistan", "Palau", "Palestine", "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines", "Poland", "Portugal", "Qatar", "Romania", "Russia", "Rwanda", "Saint Kitts and Nevis", "Saint Lucia", "Saint Vincent", "Samoa", "San Marino", "Sao Tome and Principe", "Saudi Arabia", "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "Solomon Islands", "Somalia", "South Africa", "South Korea", "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname", "Sweden", "Switzerland", "Syria", "Taiwan", "Tajikistan", "Tanzania", "Thailand", "Timor-Leste", "Togo", "Tonga", "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan", "Tuvalu", "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "United States", "Uruguay", "Uzbekistan", "Vanuatu", "Vatican City", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"];
+
+// --- INDEX PAGE LOGIC ---
 const contactForm = document.getElementById('contactForm');
 if (contactForm) {
-    // Sync Progress Bar
-    onSnapshot(doc(db, "settings", "goal"), (settingsDoc) => {
+    // Fill Country Select
+    const countrySelect = document.getElementById('country');
+    countrySelect.innerHTML = '<option value="">Select Country</option>';
+    countries.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = c;
+        countrySelect.appendChild(opt);
+    });
+
+    // Real-time Progress
+    onSnapshot(doc(db, "settings", "goal"), (sDoc) => {
         onSnapshot(collection(db, "contacts"), (snap) => {
-            const target = settingsDoc.exists() ? settingsDoc.data().target : 100;
-            const current = snap.size;
-            const percent = Math.min((current / target) * 100, 100);
+            const target = sDoc.exists() ? sDoc.data().target : 100;
+            const percent = Math.min((snap.size / target) * 100, 100);
             document.getElementById('progress-bar').style.width = percent + '%';
-            document.getElementById('count-text').innerText = `${current} / ${target} Contacts Joined`;
+            document.getElementById('count-text').innerText = `${snap.size} / ${target} Contacts Joined`;
         });
     });
 
-    // Handle Form Submit
+    // Submit
     contactForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.innerText = "Processing...";
         try {
             await addDoc(collection(db, "contacts"), {
                 name: document.getElementById('name').value,
@@ -40,53 +55,46 @@ if (contactForm) {
                 country: document.getElementById('country').value,
                 createdAt: serverTimestamp()
             });
-            alert("Contact saved successfully!");
+            alert("Successfully added to the pool!");
             contactForm.reset();
-        } catch (err) {
-            alert("Error saving: " + err.message);
-        }
+        } catch (err) { alert("Error: " + err.message); }
+        btn.disabled = false;
+        btn.innerText = "Submit Details";
     });
 }
 
-// --- LOGIC FOR ADMIN.HTML (Private Dashboard) ---
-const adminSection = document.getElementById('admin-content');
-if (adminSection) {
-    // Login Function
+// --- ADMIN PAGE LOGIC ---
+const adminContent = document.getElementById('admin-content');
+if (adminContent) {
     window.login = async () => {
         const email = document.getElementById('email').value;
         const pass = document.getElementById('pass').value;
         try {
             await signInWithEmailAndPassword(auth, email, pass);
-        } catch (err) {
-            alert("Access Denied: " + err.message);
-        }
+        } catch (err) { alert("Login failed: " + err.message); }
     };
 
-    // Auth Watcher
     onAuthStateChanged(auth, (user) => {
         if (user && user.email === "iantaracha@gmail.com") {
             document.getElementById('login-overlay').classList.add('hidden');
-            loadAdminData();
+            // Load Table
+            onSnapshot(collection(db, "contacts"), (snap) => {
+                const list = document.getElementById('list');
+                list.innerHTML = "";
+                snap.forEach(d => {
+                    const c = d.data();
+                    list.innerHTML += `<tr class="border-b border-gray-700"><td class="p-3 font-medium">${c.name}</td><td class="p-3">${c.phone}</td><td class="p-3 text-slate-400">${c.country}</td></tr>`;
+                });
+                document.getElementById('total').innerText = snap.size;
+            });
         }
     });
-
-    function loadAdminData() {
-        onSnapshot(collection(db, "contacts"), (snap) => {
-            const list = document.getElementById('list');
-            list.innerHTML = "";
-            snap.forEach(d => {
-                const c = d.data();
-                list.innerHTML += `<tr class="border-b border-gray-700"><td class="p-3">${c.name}</td><td class="p-3">${c.phone}</td><td class="p-3">${c.country}</td></tr>`;
-            });
-            document.getElementById('total').innerText = snap.size;
-        });
-    }
 
     window.setGoal = async () => {
         const val = parseInt(document.getElementById('targetInput').value);
         if (val > 0) {
             await updateDoc(doc(db, "settings", "goal"), { target: val });
-            alert("Goal updated!");
+            alert("New target set!");
         }
     };
 
@@ -101,7 +109,7 @@ if (adminSection) {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = "contacts.vcf";
+        a.download = "global_contacts.vcf";
         a.click();
     };
 }
