@@ -1,8 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, getDocs, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-// Your Firebase Configuration
 const firebaseConfig = {
     apiKey: "AIzaSyBDCMrnwLv5VdLYnaAVQ8QQKo00ucCOvwE",
     authDomain: "global-contact-pool.firebaseapp.com",
@@ -16,23 +15,23 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// All Countries List
-const countries = ["Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bhutan", "Bolivia", "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", "Burkina Faso", "Burundi", "Cabo Verde", "Cambodia", "Cameroon", "Canada", "Central African Republic", "Chad", "Chile", "China", "Colombia", "Comoros", "Congo", "Costa Rica", "Croatia", "Cuba", "Cyprus", "Czech Republic", "Denmark", "Djibouti", "Dominica", "Dominican Republic", "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia", "Eswatini", "Ethiopia", "Fiji", "Finland", "France", "Gabon", "Gambia", "Georgia", "Germany", "Ghana", "Greece", "Grenada", "Guatemala", "Guinea", "Guinea-Bissau", "Guyana", "Haiti", "Honduras", "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy", "Ivory Coast", "Jamaica", "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Kuwait", "Kyrgyzstan", "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg", "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania", "Mauritius", "Mexico", "Micronesia", "Moldova", "Monaco", "Mongolia", "Montenegro", "Morocco", "Mozambique", "Myanmar", "Namibia", "Nauru", "Nepal", "Netherlands", "New Zealand", "Nicaragua", "Niger", "Nigeria", "North Korea", "North Macedonia", "Norway", "Oman", "Pakistan", "Palau", "Palestine", "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines", "Poland", "Portugal", "Qatar", "Romania", "Russia", "Rwanda", "Saint Kitts and Nevis", "Saint Lucia", "Saint Vincent", "Samoa", "San Marino", "Sao Tome and Principe", "Saudi Arabia", "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "Solomon Islands", "Somalia", "South Africa", "South Korea", "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname", "Sweden", "Switzerland", "Syria", "Taiwan", "Tajikistan", "Tanzania", "Thailand", "Timor-Leste", "Togo", "Tonga", "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan", "Tuvalu", "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "United States", "Uruguay", "Uzbekistan", "Vanuatu", "Vatican City", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"];
+// Comprehensive list with codes
+const countryData = {
+    "Afghanistan": "+93", "Albania": "+355", "Algeria": "+213", "Angola": "+244", "Argentina": "+54", "Australia": "+61", "Austria": "+43", "Bangladesh": "+880", "Belgium": "+32", "Brazil": "+55", "Cameroon": "+237", "Canada": "+1", "China": "+86", "Egypt": "+20", "Ethiopia": "+251", "France": "+33", "Germany": "+49", "Ghana": "+233", "India": "+91", "Indonesia": "+62", "Iran": "+98", "Iraq": "+964", "Ireland": "+353", "Italy": "+39", "Japan": "+81", "Kenya": "+254", "Kuwait": "+965", "Malaysia": "+60", "Mexico": "+52", "Morocco": "+212", "Netherlands": "+31", "Nigeria": "+234", "Pakistan": "+92", "Philippines": "+63", "Portugal": "+351", "Qatar": "+974", "Russia": "+7", "Saudi Arabia": "+966", "South Africa": "+27", "Spain": "+34", "Tanzania": "+255", "Turkey": "+90", "Uganda": "+256", "UAE": "+971", "United Kingdom": "+44", "United States": "+1", "Vietnam": "+84", "Zambia": "+260", "Zimbabwe": "+263"
+};
 
 // --- INDEX PAGE LOGIC ---
 const contactForm = document.getElementById('contactForm');
 if (contactForm) {
-    // Fill Country Select
     const countrySelect = document.getElementById('country');
     countrySelect.innerHTML = '<option value="">Select Country</option>';
-    countries.forEach(c => {
+    Object.keys(countryData).sort().forEach(c => {
         const opt = document.createElement('option');
         opt.value = c;
-        opt.textContent = c;
+        opt.textContent = `${c} (${countryData[c]})`;
         countrySelect.appendChild(opt);
     });
 
-    // Real-time Progress
     onSnapshot(doc(db, "settings", "goal"), (sDoc) => {
         onSnapshot(collection(db, "contacts"), (snap) => {
             const target = sDoc.exists() ? sDoc.data().target : 100;
@@ -42,20 +41,27 @@ if (contactForm) {
         });
     });
 
-    // Submit
     contactForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const btn = document.getElementById('submitBtn');
+        const countryName = document.getElementById('country').value;
+        const rawPhone = document.getElementById('phone').value.trim();
+        const dialCode = countryData[countryName];
+        
+        // Logic: remove leading zero if exists, then attach code
+        const cleanPhone = rawPhone.startsWith('0') ? rawPhone.substring(1) : rawPhone;
+        const finalPhone = `${dialCode}${cleanPhone}`;
+
         btn.disabled = true;
         btn.innerText = "Processing...";
         try {
             await addDoc(collection(db, "contacts"), {
                 name: document.getElementById('name').value,
-                phone: document.getElementById('phone').value,
-                country: document.getElementById('country').value,
+                phone: finalPhone,
+                country: countryName,
                 createdAt: serverTimestamp()
             });
-            alert("Successfully added to the pool!");
+            alert(`Successfully added to the pool!`);
             contactForm.reset();
         } catch (err) { alert("Error: " + err.message); }
         btn.disabled = false;
@@ -77,18 +83,33 @@ if (adminContent) {
     onAuthStateChanged(auth, (user) => {
         if (user && user.email === "iantaracha@gmail.com") {
             document.getElementById('login-overlay').classList.add('hidden');
-            // Load Table
             onSnapshot(collection(db, "contacts"), (snap) => {
                 const list = document.getElementById('list');
                 list.innerHTML = "";
                 snap.forEach(d => {
                     const c = d.data();
-                    list.innerHTML += `<tr class="border-b border-gray-700"><td class="p-3 font-medium">${c.name}</td><td class="p-3">${c.phone}</td><td class="p-3 text-slate-400">${c.country}</td></tr>`;
+                    list.innerHTML += `
+                        <tr class="border-b border-gray-700">
+                            <td class="p-3 font-medium">${c.name}</td>
+                            <td class="p-3">${c.phone}</td>
+                            <td class="p-3 text-slate-400">${c.country}</td>
+                            <td class="p-3 text-center">
+                                <button onclick="deleteContact('${d.id}')" class="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1 rounded-md transition font-bold">Delete</button>
+                            </td>
+                        </tr>`;
                 });
                 document.getElementById('total').innerText = snap.size;
             });
         }
     });
+
+    window.deleteContact = async (id) => {
+        if (confirm("Permanently delete this contact?")) {
+            try {
+                await deleteDoc(doc(db, "contacts", id));
+            } catch (err) { alert("Delete failed: " + err.message); }
+        }
+    };
 
     window.setGoal = async () => {
         const val = parseInt(document.getElementById('targetInput').value);
